@@ -1,0 +1,5 @@
+module.exports = {
+  port: XXXX,
+  dropBoxApiKey: XXXX,
+  lastFmApiKey: XXXX
+}
