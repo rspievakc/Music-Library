@@ -10,12 +10,14 @@ const MusicMetadata = require('music-metadata');
 const config = require('./config')
 var mime = require('mime-types');
 
+// LastFM API initialization.
 // Todo retrieve albuns covers from last FM.
 const LastFM = require('last-fm')
 const lastfm = new LastFM(config.lastFmApiKey, { userAgent: 'MyApp/1.0.0 (http://example.com)' })
 
 const dropBoxAccessToken = config.dropBoxApiKey;
 
+// Initial music/song cache initialization
 const musicInfoCache = {
   '.info' : {
     type: 'folder',
@@ -23,14 +25,16 @@ const musicInfoCache = {
   }
 }
 
+// DropBox API initialization
 var DropBox = new Dropbox({ 
   accessToken: dropBoxAccessToken, 
   fetch: fetch 
 });
 
-// HTTP Server
+// HTTP Server configuration
 const app = express();
 app.use('/music', router);
+// Servers the static content, the frontend files will be served from there.
 app.use(express.static('public'));
 
 // Lists the folder/songs using the URI as selector
@@ -73,6 +77,7 @@ router.get('/track/*', function(req, res) {
 
   console.log(path);
 
+  // Create the stream targting the request music from the DropBox app folder.
   let stream = DropBoxStream.createDropboxDownloadStream({
     token: dropBoxAccessToken,
     path
@@ -87,13 +92,15 @@ router.get('/track/*', function(req, res) {
       'Content-Length': metadata.size
     });
   })
-  .pipe(res)
+  .pipe(res) 
   .on('progress', res => console.log(res))
   .on('finish', () => console.log('Done!'));
 })
 
 // Generates the music info cache
 // This reduces the required bandwith to access to the music listings
+
+// Retrieves the information for the song.
 function retrieveMusicInformation(entry) {
   return new Promise((resolve, reject) => {
 
@@ -108,13 +115,17 @@ function retrieveMusicInformation(entry) {
     })
     
     MusicMetadata.parseStream(stream, 'audio/mpeg', {}).then( metadata => {
-      entry['.info'].album = metadata.common.album;
-      entry['.info'].track = metadata.common.track;
-      entry['.info'].dataFormat = metadata.format.dataformat;
-      entry['.info'].duration = metadata.format.duration;
-      entry['.info'].genre = metadata.common.genre;
-      entry['.info'].artist = metadata.common.albumartist;
-      entry['.info'].year = metadata.common.year;
+      let info = entry['.info'];
+      entry['.info'] = {
+        ...entry['.info'],
+        album: metadata.common.album,
+        track: metadata.common.track,
+        dataFormat: metadata.format.dataformat,
+        duration: metadata.format.duration,
+        genre: metadata.common.genre,
+        artist: metadata.common.albumartist,
+        year: metadata.common.year
+      }
       stream.destroy();
       resolve(entry)
     }).catch(error => {
@@ -124,6 +135,7 @@ function retrieveMusicInformation(entry) {
   })
 }
 
+// Retrieves the information for the folder (recursively).
 function retrieveFolderInformation(parent, path) {
   return new Promise((resolve, reject) => {
     let topFolder = false;
@@ -172,6 +184,7 @@ function retrieveFolderInformation(parent, path) {
   })
 }
 
+// Creates the listing cache and then starts the HTTP server.
 console.log("Creating the music listing cache...");
 retrieveFolderInformation(musicInfoCache, '').then(data => {
   console.log('Music listing cache generated.');
