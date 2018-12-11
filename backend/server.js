@@ -188,7 +188,12 @@ function retrieveFolderInformation(parent, path) {
 console.log("Creating the music listing cache...");
 retrieveFolderInformation(musicInfoCache, '').then(data => {
   console.log('Music listing cache generated.');
-  app.listen(config.port, () => console.log(`HTTP Server listening on port ${config.port}.`));
+  app.listen(config.port, () => {
+    console.log(`HTTP Server listening on port ${config.port}.`)
+  }).
+  on('error', error => {
+    console.log(error);
+  });
 }).catch(error => {
   console.log(error)
 });
