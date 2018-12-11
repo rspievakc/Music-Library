@@ -48,6 +48,8 @@ To run the server:
 
       The properties: size, album, track, dataFormat, duration, genre, artist and year are only available for music files. All the other properties are available for musics and folders.
 
+      All the folders entries are attached as object properties, where the proeperty name refers to the path component.
+
   /music/track/:file
 
     This endpoint will stream the song at the :file URI component location.
